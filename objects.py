@@ -1,11 +1,14 @@
+import numpy as np
+
 class Passenger:
-    def __init__(self, id, patience, origin, destination, time_stayed):
+    def __init__(self, id, arrival_time):
         self.id = id
-        self.patience = patience
-        self.origin_x = origin_x
-        self.origin_y = origin_y
-        self.destination_x = destination_x
-        self.destination_y = destination_y
+        self.patience = 0 # not considered for now
+        self.origin_x = np.random.uniform(0, 100, 1)
+        self.origin_y = np.random.uniform(0, 100, 1)
+        self.destination_x = np.random.uniform(0, 100, 1)
+        self.destination_y = np.random.uniform(0, 100, 1)
+        self.arrival_time = arrival_time
         self.time_stayed = 0
 
     def get_id(self):
@@ -14,8 +17,11 @@ class Passenger:
     def get_origin(self):
         return self.origin_x, self.origin_y
     
-    def get_dstination(self):
+    def get_destination(self):
+        return self.destination_x, self.destination_y
         
+    def get_arrival_time(self):
+        return self.arrival_time
 
 
 class Driver: 
@@ -28,8 +34,8 @@ class Driver:
         passenger: id of the passenger who is riding
         """
         self.id = id
-        self.location_x = np.random.uniform(0, 10, 1)
-        self.location_y = np.random.uniform(0, 10, 1)
+        self.location_x = np.random.uniform(0, 100, 1)
+        self.location_y = np.random.uniform(0, 100, 1)
         self.status = 'idle'
         self.avail_time = 0
         self.passenger_id = 0
@@ -50,14 +56,16 @@ class Driver:
     def get_passenger(self):
         return self.passenger_id
 
-    def update(self, avail_time, passenger_id, location_x, location_y, status):
-        self.avail_time = 
+    def update(self, avail_time, passenger_id, status):
+        self.avail_time = avail_time
         self.passenger_id = passenger_id
+        self.status = status
+    
+    def update_location(self, location_x, location_y):
         self.location_x = location_x
         self.location_y = location_y
-        self.status = 'busy'
-    
-class Events:
+
+class Event:
     def __init__(self, time, event_type, passenger_id, driver_id):
         self.time = time
         self.event_type = event_type
