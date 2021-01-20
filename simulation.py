@@ -1,15 +1,14 @@
+# coding: utf-8
 """
 Created on Jan, 2021
 @author: Jingyuan Hu
 """
-
 import numpy as np
-
 from objects import Passenger
 from objects import Driver
 from objects import Event
 
-from helperfunctions import *
+# from helperfunctions import *
 
 num_driver = 5
 total_sim_time = 10
@@ -42,6 +41,8 @@ def main():
             passenger_arrival(passenger_id, driver_id, time)
         elif(etype == 'COMPLETION'):
             trip_completion(driver_id, time)
+        elif(etype == 'MATCH'):
+            match_request(time)
 
     # print_results()
     print(total_passenger_arrived, total_passenger_served, num_busy_driver)
@@ -162,6 +163,20 @@ def get_passenger():
     return min_arrival_passenger
 
 
+def match_request(time):
+    """
+    Do a bipartite matching between the list of idle drivers and passengers in the queue,
+    this will generate a sequence of completion events.
+    To do so, 
+    1. Collect the information from passenger queue
+    2. Collect the idle drivers from the driver list
+    3. Do the bipartite matching, and generate completion events
+    """
+
+
+
+
+
 def generate_event(etype, passenger_id, driver_id, trip_time = 0):
     """
     Event type: ARRIVAL, COMPLETION
@@ -226,10 +241,23 @@ def generate_init_event():
     total_passenger_created = 1
     generate_event('ARRIVAL', total_passenger_created, 0)
 
+
+def generate_batch_event(w):
+    """
+    Generate batching event every w seconds over the total simulation time
+    """
+    global total_sim_time
+    matching_period = total_sim_time / w
+    for i in range(matching_period):
+        # passenger_id = 0 is dummy passenger
+        generate_event('MATCH', 0, (i+1) * w) 
+
+
 def insert_event(time, etype, passenger_id, driver_id):
     global num_event_list
     event_list.append(Event(time, etype, passenger_id, driver_id))
     num_event_list += 1
+
 
 def travel_time(x1, y1, x2, y2):
     dist = np.sqrt((x2 - x1)**2 + (y2 - y1)**2)
@@ -252,9 +280,9 @@ def select_event():
     return next_event_index
 
 
-def save_results():
-    with open('result.txt', 'w') as f:
-        print('Filename:', filename, file=f)
+# def save_results():
+#     with open('result.txt', 'w') as f:
+#         print('Filename:', filename, file=f)
 
 if __name__ == "__main__":
     main()
