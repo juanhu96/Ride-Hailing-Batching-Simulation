@@ -3,6 +3,8 @@
 Created on Jan, 2021
 @author: Jingyuan Hu
 """
+
+import os
 import numpy as np
 import matplotlib.pyplot as plt
 from objects import Passenger
@@ -16,9 +18,9 @@ from decimal import Decimal
 
 # from helperfunctions import *
 
-num_driver = 10
-total_sim_time = 100
-arrival_lambda = 1
+num_driver = 40
+total_sim_time = 1000
+arrival_lambda = 20
 busy_driver = 0
 tnow = 0
 driver_list = [Driver(i+1) for i in range(num_driver)] 
@@ -32,39 +34,60 @@ total_passenger_matched = 0
 total_passenger_served = 0
 passenger_list = []
 passenger_waitmatch_list = [] # store the time spent before being matched 
-passenger_waitpick_list = [] # store the time spent before being picked
+passenger_waitpick_list = [] # store the pick up time 
 passenger_insystem_list = [] # store the time spent in the system (till they finish their trip)
 passenger_queue = []
 
 
 def main():
+    os.chdir("/Users/jingyuanhu/Desktop/Batching/Simulation/Code")
+
     match_time_list = []
     pick_time_list = []
     insystem_time_list = []
     w_list = []
-    for i in range(4):
-        w = (i + 1) * 0.5
+    for i in range(30):
+        w = (i + 1)
         w_list.append(w)
         print('Start simulation with w =', w)
         # for a batching window w, run the simulation j times and compute the average of the statistics
         match_time_list_trial = []
         pick_time_list_trial = []
         insystem_time_list_trial = []
-        for j in range(3):
-            print('Trial', j)
+        for j in range(5):
+            # print('Trial', j)
             # the average time a passenger spend before being matched/pick up/leave the system
             avg_match_time, avg_pick_time, avg_insystem_time = run_simulation(w)
             match_time_list_trial.append(avg_match_time)
             pick_time_list_trial.append(avg_pick_time)
             insystem_time_list_trial.append(avg_insystem_time)
-            
+        
         match_time_list.append(compute_avg(match_time_list_trial))
         pick_time_list.append(compute_avg(pick_time_list_trial))
         insystem_time_list.append(compute_avg(insystem_time_list_trial))
         print('End simulation with w =', w)
 
     # Plot the results over w and save the figure
+    fig, ax = plt.subplots(figsize=(20, 20))
     plt.plot(w_list, match_time_list)
+    plt.plot(w_list, pick_time_list)
+    plt.legend(["Wait time before matching", "Pick up time"])
+    plt.title('Average time over w' + '(Number of drivers: ' + str(num_driver) + ', arrival rate: ' + str(arrival_lambda) + ')', fontdict = {'fontsize' : 36})
+    plt.savefig(f'../Figs/Time({num_driver}driver_rate{arrival_lambda}).png')
+    plt.cla()
+    
+    # plt.title('Pick-up time' + '(Number of drivers: ' + str(num_driver) + ', arrival rate: ' + str(arrival_lambda) + ')', fontdict = {'fontsize' : 40})
+    # plt.savefig(f'../Figs/Time_picked({num_driver}driver_arrivalrate{arrival_lambda}).png')
+    # plt.cla()
+
+    # plt.plot(w_list, insystem_time_list)
+    # plt.title('Total time spend in the system' + '(Number of drivers: ' + str(num_driver) + ', arrival rate: ' + str(arrival_lambda) + ')', fontdict = {'fontsize' : 40})
+    # plt.savefig(f'../Figs/Time_insystem({num_driver}driver_arrivalrate{arrival_lambda}).png')
+    # plt.cla()
+
+    print('Finish plotting.')
+
+
 
 def run_simulation(w):
     global tnow, total_sim_time, total_passenger_arrived, total_passenger_matched, \
@@ -87,6 +110,8 @@ def run_simulation(w):
             trip_completion(driver_id, time)
         elif(etype == 'MATCH'):
             match_request(time)
+        else:
+            pass
 
     # print_results()
     # print('Total passenger arrived', total_passenger_arrived)
@@ -104,9 +129,11 @@ def passenger_arrival(passenger_id, time):
         total_passenger_arrived += 1
         passenger_id = total_passenger_arrived
         passenger_list.append(Passenger(passenger_id, time))
-        passenger_waitmatch_list.append(0)
-        passenger_waitpick_list.append(0)
-        passenger_insystem_list.append(0)
+
+        # passenger_waitmatch_list.append(0)
+        # passenger_waitpick_list.append(0)
+        # passenger_insystem_list.append(0)
+
         passenger_queue.append(passenger_id)
         
         # schedule next arrival
@@ -201,10 +228,20 @@ def match_request(time):
                 passenger_queue.remove(passenger_id)
                 total_passenger_matched += 1
                 num_busy_driver += 1
-                passenger_waitmatch_list[passenger_id - 1] =  Decimal(time) - Decimal(arrival_time)
-                passenger_waitpick_list[passenger_id - 1] = Decimal(time) - Decimal(arrival_time) + Decimal(pickup_time)
-                passenger_insystem_list[passenger_id - 1] = Decimal(time) - Decimal(arrival_time) + \
-                    Decimal(pickup_time) + Decimal(trip_time)
+                # passenger_waitmatch_list[passenger_id - 1] = Decimal(time) - Decimal(arrival_time)
+                # passenger_waitpick_list[passenger_id - 1] = Decimal(pickup_time)
+                # passenger_insystem_list[passenger_id - 1] = Decimal(time) - Decimal(arrival_time) + \
+                #     Decimal(pickup_time) + Decimal(trip_time)
+
+                # print(time, arrival_time, pickup_time, trip_time)
+
+                # the first 100 seconds are for warmup
+                if(time > 100):
+                    passenger_waitmatch_list.append(Decimal(time) - Decimal(arrival_time))
+                    passenger_waitpick_list.append(Decimal(pickup_time))
+                    passenger_insystem_list.append(Decimal(time) - Decimal(arrival_time) + \
+                        Decimal(pickup_time) + Decimal(trip_time))
+                
 
 
 
@@ -342,7 +379,7 @@ def compute_avg(lst):
     """
     Compute the average of a list of number
     """
-    return round(Decimal(sum(lst) / len(lst)), 1)
+    return round(Decimal(sum(lst) / len(lst)), 2)
 
 # def save_results():
 #     with open('result.txt', 'w') as f:
